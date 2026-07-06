@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { Template } from '@/types'
-import ProjectForm from '@/components/project/ProjectForm'
+import TemplateManager from '@/components/templates/TemplateManager'
 
 async function getTemplates(): Promise<Template[]> {
   const { data } = await supabase
@@ -10,14 +10,14 @@ async function getTemplates(): Promise<Template[]> {
   return (data ?? []) as Template[]
 }
 
-export default async function NewProjectPage() {
+export default async function TemplatesPage() {
   const templates = await getTemplates()
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">New Project</h1>
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
-        <ProjectForm templates={templates} />
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Project Templates</h1>
       </div>
+      <TemplateManager initial={templates} />
     </div>
   )
 }

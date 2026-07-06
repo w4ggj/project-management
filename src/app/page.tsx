@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import DeadlineStrip from '@/components/dashboard/DeadlineStrip'
-import ProjectGrid from '@/components/dashboard/ProjectGrid'
-import DailyTodos from '@/components/dashboard/DailyTodos'
+import DashboardShell from '@/components/dashboard/DashboardShell'
 import { Project, Todo } from '@/types'
 
 interface TodoWithProject extends Todo {
@@ -69,12 +68,7 @@ export default async function Dashboard() {
           <a href="/projects/new" className="text-sm text-gray-900 underline">Create your first project</a>
         </div>
       ) : (
-        <div className="flex gap-6 items-start">
-          <DailyTodos initial={allTodos} />
-          <div className="flex-1 min-w-0">
-            <ProjectGrid projects={projects} />
-          </div>
-        </div>
+        <DashboardShell projects={projects} allTodos={allTodos} />
       )}
     </div>
   )

@@ -2,16 +2,18 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Project, Status } from '@/types'
+import { Project, Status, Template } from '@/types'
 import TagInput from './TagInput'
 
 interface Props {
   project?: Project
+  templates?: Template[]
 }
 
-export default function ProjectForm({ project }: Props) {
+export default function ProjectForm({ project, templates = [] }: Props) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState('')
   const [form, setForm] = useState({
     name: project?.name ?? '',
     description: project?.description ?? '',
@@ -55,6 +57,20 @@ export default function ProjectForm({ project }: Props) {
         body: JSON.stringify(body),
       })
       const p = await res.json()
+
+      // Apply template todos if selected
+      if (selectedTemplate) {
+        const tmpl = templates.find(t => t.id === selectedTemplate)
+        const todos = tmpl?.template_todos ?? []
+        await Promise.all(todos.map(td =>
+          fetch('/api/todos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project_id: p.id, text: td.text }),
+          })
+        ))
+      }
+
       router.push(`/projects/${p.id}`)
     }
 
@@ -63,6 +79,24 @@ export default function ProjectForm({ project }: Props) {
 
   return (
     <form onSubmit={submit} className="space-y-5">
+      {!project && templates.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Start from template</label>
+          <select
+            value={selectedTemplate}
+            onChange={e => setSelectedTemplate(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white"
+          >
+            <option value="">No template</option>
+            {templates.map(t => (
+              <option key={t.id} value={t.id}>
+                {t.name} ({(t.template_todos ?? []).length} todos)
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Project Name *</label>
         <input

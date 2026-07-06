@@ -18,12 +18,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <nav className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-screen-2xl mx-auto px-6 h-14 flex items-center justify-between">
             <a href="/" className="font-bold text-gray-900 text-lg">Project Hub</a>
-            <a
-              href="/projects/new"
-              className="px-4 py-1.5 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              + New Project
-            </a>
+            <div className="flex items-center gap-3">
+              <a href="/templates" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Templates</a>
+              <a
+                href="/projects/new"
+                className="px-4 py-1.5 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                + New Project
+              </a>
+            </div>
           </div>
         </nav>
         <main className="max-w-screen-2xl mx-auto px-6 py-8">

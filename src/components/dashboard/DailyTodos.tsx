@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Todo } from '@/types'
+import { Todo, Project } from '@/types'
 
 interface TodoWithProject extends Todo {
   project_name: string
@@ -14,9 +14,33 @@ interface Group {
   todos: TodoWithProject[]
 }
 
-export default function DailyTodos({ initial }: { initial: TodoWithProject[] }) {
+function today() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function weekEnd() {
+  return new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+}
+
+function isOverdue(due: string | null) {
+  return !!due && due < today()
+}
+
+export default function DailyTodos({
+  initial,
+  projects,
+}: {
+  initial: TodoWithProject[]
+  projects: Pick<Project, 'id' | 'name'>[]
+}) {
   const [todos, setTodos] = useState<TodoWithProject[]>(initial)
   const [filter, setFilter] = useState<'all' | 'due'>('all')
+  const [doneOpen, setDoneOpen] = useState(false)
+
+  // Quick-add state
+  const [addText, setAddText] = useState('')
+  const [addProjectId, setAddProjectId] = useState('')
+  const [adding, setAdding] = useState(false)
 
   async function toggle(id: string, done: boolean) {
     setTodos(prev => prev.map(t => t.id === id ? { ...t, done } : t))
@@ -27,32 +51,51 @@ export default function DailyTodos({ initial }: { initial: TodoWithProject[] }) 
     })
   }
 
-  const today = new Date().toISOString().slice(0, 10)
-  const week = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+  async function quickAdd(e: React.FormEvent) {
+    e.preventDefault()
+    if (!addText.trim() || !addProjectId || adding) return
+    setAdding(true)
+    const res = await fetch('/api/todos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: addProjectId, text: addText.trim() }),
+    })
+    const newTodo = await res.json()
+    if (res.ok) {
+      const proj = projects.find(p => p.id === addProjectId)
+      setTodos(prev => [...prev, {
+        ...newTodo,
+        project_name: proj?.name ?? 'Unknown',
+      }])
+      setAddText('')
+    }
+    setAdding(false)
+  }
+
+  const t = today()
+  const w = weekEnd()
   const visible = filter === 'due'
-    ? todos.filter(t => t.due_date && t.due_date <= week)
+    ? todos.filter(todo => todo.due_date && todo.due_date <= w)
     : todos
 
   const incomplete = visible.filter(t => !t.done)
   const completed = visible.filter(t => t.done)
 
-  const groups: Group[] = Object.values(
-    incomplete.reduce<Record<string, Group>>((acc, t) => {
-      if (!acc[t.project_id]) acc[t.project_id] = { project_id: t.project_id, project_name: t.project_name, todos: [] }
-      acc[t.project_id].todos.push(t)
-      return acc
-    }, {})
-  )
-
-  const doneGroups: Group[] = Object.values(
-    completed.reduce<Record<string, Group>>((acc, t) => {
-      if (!acc[t.project_id]) acc[t.project_id] = { project_id: t.project_id, project_name: t.project_name, todos: [] }
-      acc[t.project_id].todos.push(t)
-      return acc
-    }, {})
-  )
-
-  const [doneOpen, setDoneOpen] = useState(false)
+  function toGroups(list: TodoWithProject[]): Group[] {
+    return Object.values(
+      list.reduce<Record<string, Group>>((acc, todo) => {
+        if (!acc[todo.project_id]) {
+          acc[todo.project_id] = {
+            project_id: todo.project_id,
+            project_name: todo.project_name,
+            todos: [],
+          }
+        }
+        acc[todo.project_id].todos.push(todo)
+        return acc
+      }, {})
+    )
+  }
 
   return (
     <div className="w-72 shrink-0">
@@ -71,13 +114,45 @@ export default function DailyTodos({ initial }: { initial: TodoWithProject[] }) 
         </div>
       </div>
 
-      {groups.length === 0 && incomplete.length === 0 ? (
-        <p className="text-gray-400 text-xs text-center py-6">
+      {/* Quick-add form */}
+      {projects.length > 0 && (
+        <form onSubmit={quickAdd} className="mb-4 space-y-1.5">
+          <select
+            value={addProjectId}
+            onChange={e => setAddProjectId(e.target.value)}
+            className="w-full text-xs px-2 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-300"
+          >
+            <option value="">Select project…</option>
+            {projects.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <div className="flex gap-1">
+            <input
+              type="text"
+              placeholder="New task…"
+              value={addText}
+              onChange={e => setAddText(e.target.value)}
+              className="flex-1 text-xs px-2 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 placeholder-gray-400"
+            />
+            <button
+              type="submit"
+              disabled={adding || !addText.trim() || !addProjectId}
+              className="px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-lg hover:bg-gray-700 disabled:opacity-40 transition-colors"
+            >
+              +
+            </button>
+          </div>
+        </form>
+      )}
+
+      {incomplete.length === 0 ? (
+        <p className="text-gray-400 text-xs text-center py-4">
           {filter === 'due' ? 'Nothing due this week' : 'No open tasks'}
         </p>
       ) : (
         <div className="space-y-4">
-          {groups.map(group => (
+          {toGroups(incomplete).map(group => (
             <div key={group.project_id}>
               <a
                 href={`/projects/${group.project_id}`}
@@ -86,31 +161,36 @@ export default function DailyTodos({ initial }: { initial: TodoWithProject[] }) 
                 {group.project_name}
               </a>
               <ul className="mt-1 space-y-1">
-                {group.todos.map(todo => (
-                  <li key={todo.id} className="flex items-start gap-2">
-                    <input
-                      type="checkbox"
-                      checked={todo.done}
-                      onChange={e => toggle(todo.id, e.target.checked)}
-                      className="mt-0.5 h-3.5 w-3.5 rounded border-gray-300 accent-gray-900 shrink-0 cursor-pointer"
-                    />
-                    <span className={`text-xs leading-snug ${todo.done ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                      {todo.text}
-                      {todo.due_date && (
-                        <span className={`ml-1 ${todo.due_date < new Date().toISOString().slice(0, 10) ? 'text-red-400' : 'text-gray-400'}`}>
-                          · {todo.due_date}
-                        </span>
-                      )}
-                    </span>
-                  </li>
-                ))}
+                {group.todos.map(todo => {
+                  const overdue = isOverdue(todo.due_date)
+                  return (
+                    <li
+                      key={todo.id}
+                      className={`flex items-start gap-2 rounded px-1 py-0.5 ${overdue ? 'bg-red-50' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={todo.done}
+                        onChange={e => toggle(todo.id, e.target.checked)}
+                        className="mt-0.5 h-3.5 w-3.5 rounded border-gray-300 accent-gray-900 shrink-0 cursor-pointer"
+                      />
+                      <span className={`text-xs leading-snug ${overdue ? 'text-red-700' : 'text-gray-700'}`}>
+                        {todo.text}
+                        {todo.due_date && (
+                          <span className={`ml-1 text-xs ${overdue ? 'text-red-400 font-medium' : 'text-gray-400'}`}>
+                            · {overdue ? 'overdue ' : ''}{todo.due_date}
+                          </span>
+                        )}
+                      </span>
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           ))}
         </div>
       )}
 
-      {/* Completed section */}
       {completed.length > 0 && (
         <div className="mt-4">
           <button
@@ -121,7 +201,7 @@ export default function DailyTodos({ initial }: { initial: TodoWithProject[] }) 
           </button>
           {doneOpen && (
             <div className="mt-2 space-y-4">
-              {doneGroups.map(group => (
+              {toGroups(completed).map(group => (
                 <div key={group.project_id}>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{group.project_name}</p>
                   <ul className="mt-1 space-y-1">

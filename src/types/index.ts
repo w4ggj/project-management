@@ -16,6 +16,7 @@ export interface Project {
   services?: Service[]
   paths?: Path[]
   notes?: Note[]
+  time_entries?: TimeEntry[]
 }
 
 export interface Todo {
@@ -52,4 +53,26 @@ export interface Path {
   description: string | null
   position: number
   created_at: string
+}
+
+export interface TimeEntry {
+  id: string
+  project_id: string
+  minutes: number
+  description: string | null
+  created_at: string
+}
+
+export interface Template {
+  id: string
+  name: string
+  created_at: string
+  template_todos?: TemplateTodo[]
+}
+
+export interface TemplateTodo {
+  id: string
+  template_id: string
+  text: string
+  position: number
 }
