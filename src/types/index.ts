@@ -55,6 +55,11 @@ export interface Path {
   created_at: string
 }
 
+// Used by dashboard components that only need done status for progress bars
+export type ProjectSummary = Omit<Project, 'todos' | 'services' | 'paths' | 'notes' | 'time_entries'> & {
+  todos?: { done: boolean }[]
+}
+
 export interface TimeEntry {
   id: string
   project_id: string

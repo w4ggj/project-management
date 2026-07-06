@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Project } from '@/types'
+import { ProjectSummary } from '@/types'
 import ProjectCard from './ProjectCard'
 
 type SortKey = 'status' | 'name' | 'deadline'
@@ -21,7 +21,7 @@ function sortProjects(projects: Project[], key: SortKey): Project[] {
   })
 }
 
-export default function ProjectGrid({ projects }: { projects: (Project & { todos?: { done: boolean }[] })[] }) {
+export default function ProjectGrid({ projects }: { projects: ProjectSummary[] }) {
   const [sort, setSort] = useState<SortKey>('status')
   const [doneOpen, setDoneOpen] = useState(false)
 

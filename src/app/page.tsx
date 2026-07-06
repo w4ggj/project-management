@@ -1,19 +1,19 @@
 import { supabase } from '@/lib/supabase'
 import DeadlineStrip from '@/components/dashboard/DeadlineStrip'
 import DashboardShell from '@/components/dashboard/DashboardShell'
-import { Project, Todo } from '@/types'
+import { Project, ProjectSummary, Todo } from '@/types'
 
 interface TodoWithProject extends Todo {
   project_name: string
   project_id: string
 }
 
-async function getProjects(): Promise<(Project & { todos?: { done: boolean }[] })[]> {
+async function getProjects(): Promise<ProjectSummary[]> {
   const { data } = await supabase
     .from('projects')
     .select('*, todos(id, done)')
     .order('updated_at', { ascending: false })
-  return (data ?? []) as unknown as (Project & { todos?: { done: boolean }[] })[]
+  return (data ?? []) as unknown as ProjectSummary[]
 }
 
 async function getAllProjects(): Promise<Project[]> {

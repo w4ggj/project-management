@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Project, Todo } from '@/types'
+import { ProjectSummary, Todo } from '@/types'
 import DailyTodos from './DailyTodos'
 import ProjectGrid from './ProjectGrid'
 
@@ -10,13 +10,11 @@ interface TodoWithProject extends Todo {
   project_id: string
 }
 
-type ShellProject = Omit<Project, 'todos'> & { todos?: { done: boolean }[] }
-
 export default function DashboardShell({
   projects,
   allTodos,
 }: {
-  projects: ShellProject[]
+  projects: ProjectSummary[]
   allTodos: TodoWithProject[]
 }) {
   const [search, setSearch] = useState('')
