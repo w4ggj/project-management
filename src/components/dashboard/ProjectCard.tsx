@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Project } from '@/types'
-import { STATUS_COLORS, deadlineLabel, isOverdue } from '@/lib/utils'
+import { STATUS_COLORS, deadlineLabel, isOverdue, formatDate } from '@/lib/utils'
 import StatusBadge from '@/components/ui/StatusBadge'
 
 export default function ProjectCard({ project }: { project: Project & { todos?: { done: boolean }[] } }) {
@@ -36,10 +36,11 @@ export default function ProjectCard({ project }: { project: Project & { todos?: 
           {todos.length > 0 && (
             <span>{doneTodos}/{todos.length} todos done</span>
           )}
-          {label && (
-            <span className={`ml-auto font-medium ${overdue ? 'text-red-600' : 'text-amber-600'}`}>
-              {label}
-            </span>
+          {project.deadline && (
+            <div className={`ml-auto text-right font-medium ${overdue ? 'text-red-600' : label ? 'text-amber-600' : 'text-gray-400'}`}>
+              {label && <div>{label}</div>}
+              <div>{formatDate(project.deadline)}</div>
+            </div>
           )}
         </div>
       </div>
