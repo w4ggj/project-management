@@ -5,6 +5,8 @@ import DeadlineStrip from '@/components/dashboard/DeadlineStrip'
 import StatusFilter from '@/components/dashboard/StatusFilter'
 import { Project } from '@/types'
 
+const STATUS_ORDER: Record<string, number> = { active: 0, paused: 1, done: 2 }
+
 async function getProjects(status?: string): Promise<Project[]> {
   let query = supabase
     .from('projects')
@@ -16,7 +18,8 @@ async function getProjects(status?: string): Promise<Project[]> {
   }
 
   const { data } = await query
-  return (data ?? []) as unknown as Project[]
+  const projects = (data ?? []) as unknown as Project[]
+  return projects.sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status])
 }
 
 async function getAllProjects(): Promise<Project[]> {
