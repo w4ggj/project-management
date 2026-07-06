@@ -9,43 +9,55 @@ export default function ProjectCard({ project }: { project: Project & { todos?: 
   const overdue = isOverdue(project.deadline)
   const todos = project.todos ?? []
   const doneTodos = todos.filter(t => t.done).length
+  const pct = todos.length > 0 ? Math.round((doneTodos / todos.length) * 100) : null
 
   return (
     <Link href={`/projects/${project.id}`}>
-      <div className={`bg-white rounded-xl border-l-4 ${colors.border} border border-gray-100 p-5 hover:shadow-md transition-shadow cursor-pointer h-full flex flex-col gap-3`}>
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="text-xs text-gray-400 font-mono mb-0.5">{project.id}</p>
-            <h2 className="font-semibold text-gray-900 text-lg leading-tight">{project.name}</h2>
-          </div>
-          <StatusBadge status={project.status} />
+      <div className={`bg-white border-l-4 ${colors.border} border-b border-gray-100 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer flex items-center gap-4`}>
+
+        {/* Status dot */}
+        <div className={`w-2 h-2 rounded-full shrink-0 ${colors.dot}`} />
+
+        {/* Name + description */}
+        <div className="flex-1 min-w-0">
+          <span className="font-medium text-gray-900 text-sm">{project.name}</span>
+          {project.description && (
+            <span className="text-gray-400 text-xs ml-2 truncate hidden sm:inline">{project.description}</span>
+          )}
         </div>
 
-        {project.description && (
-          <p className="text-gray-500 text-sm line-clamp-2">{project.description}</p>
-        )}
-
+        {/* Tags */}
         {project.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {project.tags.map(tag => (
-              <span key={tag} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-md">
+          <div className="hidden md:flex gap-1 shrink-0">
+            {project.tags.slice(0, 3).map(tag => (
+              <span key={tag} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 text-xs rounded">
                 {tag}
               </span>
             ))}
           </div>
         )}
 
-        <div className="mt-auto flex items-center justify-between text-xs text-gray-400">
-          {todos.length > 0 && (
-            <span>{doneTodos}/{todos.length} todos done</span>
-          )}
-          {project.deadline && (
-            <div className={`ml-auto text-right font-medium ${overdue ? 'text-red-600' : label ? 'text-amber-600' : 'text-gray-400'}`}>
-              {label && <div>{label}</div>}
-              <div>{formatDate(project.deadline)}</div>
+        {/* Progress */}
+        {pct !== null && (
+          <div className="hidden sm:flex items-center gap-2 shrink-0 w-24">
+            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full bg-gray-400 rounded-full" style={{ width: `${pct}%` }} />
             </div>
-          )}
-        </div>
+            <span className="text-xs text-gray-400 w-7 text-right">{pct}%</span>
+          </div>
+        )}
+
+        {/* Deadline */}
+        {project.deadline ? (
+          <div className={`text-xs shrink-0 text-right w-24 font-medium ${overdue ? 'text-red-600' : label ? 'text-amber-600' : 'text-gray-400'}`}>
+            {label && <div>{label}</div>}
+            <div className="font-normal">{formatDate(project.deadline)}</div>
+          </div>
+        ) : (
+          <div className="w-24 shrink-0" />
+        )}
+
+        <StatusBadge status={project.status} />
       </div>
     </Link>
   )

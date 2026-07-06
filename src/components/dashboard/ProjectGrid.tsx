@@ -46,36 +46,32 @@ export default function ProjectGrid({ projects }: { projects: ProjectSummary[] }
         ))}
       </div>
 
-      <div className="flex gap-6 items-start">
-        {/* Active + paused projects */}
-        <div className="flex-1 min-w-0">
-          {active.length === 0 ? (
-            <p className="text-gray-400 text-sm text-center py-12">No active or paused projects</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {active.map(p => <ProjectCard key={p.id} project={p as unknown as Project} />)}
+      {/* Active + paused projects */}
+      {active.length === 0 ? (
+        <p className="text-gray-400 text-sm text-center py-12">No active or paused projects</p>
+      ) : (
+        <div className="rounded-xl border border-gray-100 overflow-hidden">
+          {active.map(p => <ProjectCard key={p.id} project={p as unknown as Project} />)}
+        </div>
+      )}
+
+      {/* Done accordion */}
+      {done.length > 0 && (
+        <div className="mt-4">
+          <button
+            onClick={() => setDoneOpen(o => !o)}
+            className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-medium text-gray-600 transition-colors"
+          >
+            <span>Done ({done.length})</span>
+            <span className="text-gray-400 text-xs">{doneOpen ? '▲' : '▼'}</span>
+          </button>
+          {doneOpen && (
+            <div className="mt-2 rounded-xl border border-gray-100 overflow-hidden">
+              {done.map(p => <ProjectCard key={p.id} project={p as unknown as Project} />)}
             </div>
           )}
         </div>
-
-        {/* Done accordion */}
-        {done.length > 0 && (
-          <div className="w-72 shrink-0">
-            <button
-              onClick={() => setDoneOpen(o => !o)}
-              className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-medium text-gray-600 transition-colors"
-            >
-              <span>Done ({done.length})</span>
-              <span className="text-gray-400 text-xs">{doneOpen ? '▲' : '▼'}</span>
-            </button>
-            {doneOpen && (
-              <div className="mt-2 space-y-3">
-                {done.map(p => <ProjectCard key={p.id} project={p as unknown as Project} />)}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   )
 }
