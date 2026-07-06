@@ -1,25 +1,14 @@
-import { Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
-import ProjectCard from '@/components/dashboard/ProjectCard'
 import DeadlineStrip from '@/components/dashboard/DeadlineStrip'
-import StatusFilter from '@/components/dashboard/StatusFilter'
+import ProjectGrid from '@/components/dashboard/ProjectGrid'
 import { Project } from '@/types'
 
-const STATUS_ORDER: Record<string, number> = { active: 0, paused: 1, done: 2 }
-
-async function getProjects(status?: string): Promise<Project[]> {
-  let query = supabase
+async function getProjects(): Promise<(Project & { todos?: { done: boolean }[] })[]> {
+  const { data } = await supabase
     .from('projects')
     .select('*, todos(id, done)')
     .order('updated_at', { ascending: false })
-
-  if (status && status !== 'all') {
-    query = query.eq('status', status)
-  }
-
-  const { data } = await query
-  const projects = (data ?? []) as unknown as Project[]
-  return projects.sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status])
+  return (data ?? []) as unknown as (Project & { todos?: { done: boolean }[] })[]
 }
 
 async function getAllProjects(): Promise<Project[]> {
@@ -30,14 +19,9 @@ async function getAllProjects(): Promise<Project[]> {
   return (data ?? []) as Project[]
 }
 
-export default async function Dashboard({
-  searchParams,
-}: {
-  searchParams: Promise<{ status?: string }>
-}) {
-  const { status } = await searchParams
+export default async function Dashboard() {
   const [projects, allProjects] = await Promise.all([
-    getProjects(status),
+    getProjects(),
     getAllProjects(),
   ])
 
@@ -58,9 +42,6 @@ export default async function Dashboard({
             {allProjects.filter(p => p.status === 'done').length} done
           </p>
         </div>
-        <Suspense>
-          <StatusFilter />
-        </Suspense>
       </div>
 
       {projects.length === 0 ? (
@@ -69,11 +50,7 @@ export default async function Dashboard({
           <a href="/projects/new" className="text-sm text-gray-900 underline">Create your first project</a>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map(p => (
-            <ProjectCard key={p.id} project={p} />
-          ))}
-        </div>
+        <ProjectGrid projects={projects} />
       )}
     </div>
   )
