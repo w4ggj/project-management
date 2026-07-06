@@ -140,6 +140,27 @@ server.tool('update_left_off', 'Update the "where I left off" field for a projec
   return ok(data)
 })
 
+server.tool('add_path', 'Add a file/directory path to a project', {
+  project_id: z.string().describe('Project ID'),
+  path: z.string().describe('File or directory path'),
+  description: z.string().optional().describe('What this path is for'),
+}, async (args) => {
+  const data = await api('POST', '/api/paths', args)
+  if (data?.error) return err(data.error)
+  return ok(data)
+})
+
+server.tool('add_service', 'Add a service/URL to a project', {
+  project_id: z.string().describe('Project ID'),
+  name: z.string().describe('Service name (e.g. "Supabase", "Render dashboard")'),
+  url: z.string().optional().describe('Service URL'),
+  notes: z.string().optional().describe('Any notes about this service'),
+}, async (args) => {
+  const data = await api('POST', '/api/services', args)
+  if (data?.error) return err(data.error)
+  return ok(data)
+})
+
 server.tool('delete_todo', 'Delete a todo by ID', {
   id: z.string().describe('Todo ID'),
 }, async ({ id }) => {

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { supabase } from '@/lib/supabase'
 import DeadlineStrip from '@/components/dashboard/DeadlineStrip'
 import DashboardShell from '@/components/dashboard/DashboardShell'
