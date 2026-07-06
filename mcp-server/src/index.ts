@@ -10,23 +10,25 @@ if (!supabaseUrl || !supabaseKey) {
   process.exit(1)
 }
 
-// Intercept stdout to ensure all MCP protocol output is ASCII-safe
+// Strip all non-printable-ASCII from stdout before Claude Desktop receives it
 const _write = process.stdout.write.bind(process.stdout)
 process.stdout.write = (chunk: any, ...args: any[]) => {
   if (typeof chunk === 'string') {
-    chunk = chunk.replace(/[^\x00-\x7F]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)
+    chunk = chunk.replace(/[^\x09\x0A\x0D\x20-\x7E]/g, '')
   } else if (Buffer.isBuffer(chunk)) {
-    const str = chunk.toString('utf8').replace(/[^\x00-\x7F]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)
-    chunk = Buffer.from(str, 'utf8')
+    chunk = Buffer.from(chunk.toString('utf8').replace(/[^\x09\x0A\x0D\x20-\x7E]/g, ''), 'utf8')
   }
   return (_write as any)(chunk, ...args)
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
+function sanitize(s: string): string {
+  return s.replace(/[^\x20-\x7E\n\r\t]/g, '')
+}
+
 function toText(data: unknown): string {
-  return JSON.stringify(data, null, 2)
-    .replace(/[^\x00-\x7F]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)
+  return sanitize(JSON.stringify(data, null, 2))
 }
 
 function ok(data: unknown) {
@@ -34,7 +36,7 @@ function ok(data: unknown) {
 }
 
 function err(msg: string) {
-  return { content: [{ type: 'text' as const, text: `Error: ${msg}` }] }
+  return { content: [{ type: 'text' as const, text: sanitize(`Error: ${msg}`) }] }
 }
 
 const server = new McpServer({
