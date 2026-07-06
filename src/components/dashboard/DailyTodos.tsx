@@ -27,8 +27,10 @@ export default function DailyTodos({ initial }: { initial: TodoWithProject[] }) 
     })
   }
 
+  const today = new Date().toISOString().slice(0, 10)
+  const week = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
   const visible = filter === 'due'
-    ? todos.filter(t => t.due_date && t.due_date <= new Date().toISOString().slice(0, 10))
+    ? todos.filter(t => t.due_date && t.due_date <= week)
     : todos
 
   const incomplete = visible.filter(t => !t.done)
@@ -63,7 +65,7 @@ export default function DailyTodos({ initial }: { initial: TodoWithProject[] }) 
               onClick={() => setFilter(f)}
               className={`px-2 py-0.5 text-xs rounded-full transition-colors ${filter === f ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
             >
-              {f === 'all' ? 'All' : 'Due'}
+              {f === 'all' ? 'All' : 'This week'}
             </button>
           ))}
         </div>
@@ -71,7 +73,7 @@ export default function DailyTodos({ initial }: { initial: TodoWithProject[] }) 
 
       {groups.length === 0 && incomplete.length === 0 ? (
         <p className="text-gray-400 text-xs text-center py-6">
-          {filter === 'due' ? 'Nothing due today' : 'No open tasks'}
+          {filter === 'due' ? 'Nothing due this week' : 'No open tasks'}
         </p>
       ) : (
         <div className="space-y-4">
