@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 
-const BASE_URL = process.env.APP_URL?.replace(/\/$/, '') ?? 'https://project-management-latest.onrender.com'
+const BASE_URL = process.env.APP_URL?.replace(/\/$/, '') ?? 'https://project-management-qyem.onrender.com'
 const API_KEY = process.env.CRUD_API_KEY ?? ''
 
 if (!API_KEY) {
