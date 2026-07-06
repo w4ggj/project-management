@@ -10,6 +10,18 @@ if (!supabaseUrl || !supabaseKey) {
   process.exit(1)
 }
 
+// Intercept stdout to ensure all MCP protocol output is ASCII-safe
+const _write = process.stdout.write.bind(process.stdout)
+process.stdout.write = (chunk: any, ...args: any[]) => {
+  if (typeof chunk === 'string') {
+    chunk = chunk.replace(/[^\x00-\x7F]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)
+  } else if (Buffer.isBuffer(chunk)) {
+    const str = chunk.toString('utf8').replace(/[^\x00-\x7F]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)
+    chunk = Buffer.from(str, 'utf8')
+  }
+  return (_write as any)(chunk, ...args)
+}
+
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 function toText(data: unknown): string {
