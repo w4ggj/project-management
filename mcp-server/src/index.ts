@@ -40,7 +40,7 @@ function err(msg: string) {
 }
 
 const server = new McpServer({
-  name: 'project-management',
+  name: 'pm-supabase',
   version: '1.0.0',
 })
 

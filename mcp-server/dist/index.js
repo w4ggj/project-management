@@ -32,7 +32,7 @@ function err(msg) {
     return { content: [{ type: 'text', text: sanitize(`Error: ${msg}`) }] };
 }
 const server = new McpServer({
-    name: 'project-management',
+    name: 'pm-supabase',
     version: '1.0.0',
 });
 server.tool('list_projects', 'List all projects with their status, deadline, and todo counts', {}, async () => {
