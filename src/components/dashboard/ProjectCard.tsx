@@ -14,7 +14,10 @@ export default function ProjectCard({ project }: { project: Project & { todos?: 
     <Link href={`/projects/${project.id}`}>
       <div className={`bg-white rounded-xl border-l-4 ${colors.border} border border-gray-100 p-5 hover:shadow-md transition-shadow cursor-pointer h-full flex flex-col gap-3`}>
         <div className="flex items-start justify-between gap-2">
-          <h2 className="font-semibold text-gray-900 text-lg leading-tight">{project.name}</h2>
+          <div>
+            <p className="text-xs text-gray-400 font-mono mb-0.5">{project.id}</p>
+            <h2 className="font-semibold text-gray-900 text-lg leading-tight">{project.name}</h2>
+          </div>
           <StatusBadge status={project.status} />
         </div>
 
