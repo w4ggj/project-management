@@ -12,6 +12,19 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
+function toText(data: unknown): string {
+  return JSON.stringify(data, null, 2)
+    .replace(/[^\x00-\x7F]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)
+}
+
+function ok(data: unknown) {
+  return { content: [{ type: 'text' as const, text: toText(data) }] }
+}
+
+function err(msg: string) {
+  return { content: [{ type: 'text' as const, text: `Error: ${msg}` }] }
+}
+
 const server = new McpServer({
   name: 'project-management',
   version: '1.0.0',
@@ -27,7 +40,7 @@ server.tool(
       .select('*, todos(done)')
       .order('created_at', { ascending: false })
 
-    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }] }
+    if (error) return err(error.message)
 
     const projects = data.map(p => {
       const todos = p.todos ?? []
@@ -47,7 +60,7 @@ server.tool(
       }
     })
 
-    return { content: [{ type: 'text', text: JSON.stringify(projects, null, 2) }] }
+    return ok(projects)
   }
 )
 
@@ -64,17 +77,15 @@ server.tool(
       supabase.from('paths').select('*').eq('project_id', id).order('position'),
     ])
 
-    if (projectRes.error) return { content: [{ type: 'text', text: `Error: ${projectRes.error.message}` }] }
+    if (projectRes.error) return err(projectRes.error.message)
 
-    const result = {
+    return ok({
       ...projectRes.data,
       todos: todosRes.data ?? [],
       notes: notesRes.data ?? [],
       services: servicesRes.data ?? [],
       paths: pathsRes.data ?? [],
-    }
-
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
+    })
   }
 )
 
@@ -107,8 +118,8 @@ server.tool(
       .select()
       .single()
 
-    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }] }
-    return { content: [{ type: 'text', text: `Created project: ${JSON.stringify(data, null, 2)}` }] }
+    if (error) return err(error.message)
+    return ok(data)
   }
 )
 
@@ -141,8 +152,8 @@ server.tool(
       .select()
       .single()
 
-    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }] }
-    return { content: [{ type: 'text', text: `Updated project: ${JSON.stringify(data, null, 2)}` }] }
+    if (error) return err(error.message)
+    return ok(data)
   }
 )
 
@@ -170,8 +181,8 @@ server.tool(
       .select()
       .single()
 
-    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }] }
-    return { content: [{ type: 'text', text: `Added todo: ${JSON.stringify(data, null, 2)}` }] }
+    if (error) return err(error.message)
+    return ok(data)
   }
 )
 
@@ -199,8 +210,8 @@ server.tool(
       .select()
       .single()
 
-    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }] }
-    return { content: [{ type: 'text', text: `Updated todo: ${JSON.stringify(data, null, 2)}` }] }
+    if (error) return err(error.message)
+    return ok(data)
   }
 )
 
@@ -218,8 +229,8 @@ server.tool(
       .select()
       .single()
 
-    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }] }
-    return { content: [{ type: 'text', text: `Added note: ${JSON.stringify(data, null, 2)}` }] }
+    if (error) return err(error.message)
+    return ok(data)
   }
 )
 
@@ -238,8 +249,8 @@ server.tool(
       .select('id, name, left_off')
       .single()
 
-    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }] }
-    return { content: [{ type: 'text', text: `Updated: ${JSON.stringify(data, null, 2)}` }] }
+    if (error) return err(error.message)
+    return ok(data)
   }
 )
 

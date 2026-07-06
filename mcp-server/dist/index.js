@@ -8,6 +8,16 @@ if (!supabaseUrl || !supabaseKey) {
     process.exit(1);
 }
 const supabase = createClient(supabaseUrl, supabaseKey);
+function toText(data) {
+    return JSON.stringify(data, null, 2)
+        .replace(/[^\x00-\x7F]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+}
+function ok(data) {
+    return { content: [{ type: 'text', text: toText(data) }] };
+}
+function err(msg) {
+    return { content: [{ type: 'text', text: `Error: ${msg}` }] };
+}
 const server = new McpServer({
     name: 'project-management',
     version: '1.0.0',
@@ -18,7 +28,7 @@ server.tool('list_projects', 'List all projects with their status, deadline, and
         .select('*, todos(done)')
         .order('created_at', { ascending: false });
     if (error)
-        return { content: [{ type: 'text', text: `Error: ${error.message}` }] };
+        return err(error.message);
     const projects = data.map(p => {
         const todos = p.todos ?? [];
         const done = todos.filter((t) => t.done).length;
@@ -36,7 +46,7 @@ server.tool('list_projects', 'List all projects with their status, deadline, and
             updated_at: p.updated_at,
         };
     });
-    return { content: [{ type: 'text', text: JSON.stringify(projects, null, 2) }] };
+    return ok(projects);
 });
 server.tool('get_project', 'Get full details for a specific project including todos, notes, services, and paths', { id: z.string().describe('Project ID') }, async ({ id }) => {
     const [projectRes, todosRes, notesRes, servicesRes, pathsRes] = await Promise.all([
@@ -47,15 +57,14 @@ server.tool('get_project', 'Get full details for a specific project including to
         supabase.from('paths').select('*').eq('project_id', id).order('position'),
     ]);
     if (projectRes.error)
-        return { content: [{ type: 'text', text: `Error: ${projectRes.error.message}` }] };
-    const result = {
+        return err(projectRes.error.message);
+    return ok({
         ...projectRes.data,
         todos: todosRes.data ?? [],
         notes: notesRes.data ?? [],
         services: servicesRes.data ?? [],
         paths: pathsRes.data ?? [],
-    };
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    });
 });
 server.tool('create_project', 'Create a new project', {
     name: z.string().describe('Project name'),
@@ -82,8 +91,8 @@ server.tool('create_project', 'Create a new project', {
         .select()
         .single();
     if (error)
-        return { content: [{ type: 'text', text: `Error: ${error.message}` }] };
-    return { content: [{ type: 'text', text: `Created project: ${JSON.stringify(data, null, 2)}` }] };
+        return err(error.message);
+    return ok(data);
 });
 server.tool('update_project', 'Update an existing project\'s fields', {
     id: z.string().describe('Project ID'),
@@ -109,8 +118,8 @@ server.tool('update_project', 'Update an existing project\'s fields', {
         .select()
         .single();
     if (error)
-        return { content: [{ type: 'text', text: `Error: ${error.message}` }] };
-    return { content: [{ type: 'text', text: `Updated project: ${JSON.stringify(data, null, 2)}` }] };
+        return err(error.message);
+    return ok(data);
 });
 server.tool('add_todo', 'Add a todo item to a project', {
     project_id: z.string().describe('Project ID'),
@@ -130,8 +139,8 @@ server.tool('add_todo', 'Add a todo item to a project', {
         .select()
         .single();
     if (error)
-        return { content: [{ type: 'text', text: `Error: ${error.message}` }] };
-    return { content: [{ type: 'text', text: `Added todo: ${JSON.stringify(data, null, 2)}` }] };
+        return err(error.message);
+    return ok(data);
 });
 server.tool('update_todo', 'Update a todo item (mark done, change text, change due date)', {
     id: z.string().describe('Todo ID'),
@@ -152,8 +161,8 @@ server.tool('update_todo', 'Update a todo item (mark done, change text, change d
         .select()
         .single();
     if (error)
-        return { content: [{ type: 'text', text: `Error: ${error.message}` }] };
-    return { content: [{ type: 'text', text: `Updated todo: ${JSON.stringify(data, null, 2)}` }] };
+        return err(error.message);
+    return ok(data);
 });
 server.tool('add_note', 'Add a timestamped note to a project', {
     project_id: z.string().describe('Project ID'),
@@ -165,8 +174,8 @@ server.tool('add_note', 'Add a timestamped note to a project', {
         .select()
         .single();
     if (error)
-        return { content: [{ type: 'text', text: `Error: ${error.message}` }] };
-    return { content: [{ type: 'text', text: `Added note: ${JSON.stringify(data, null, 2)}` }] };
+        return err(error.message);
+    return ok(data);
 });
 server.tool('update_left_off', 'Update the "where I left off" field for a project — shortcut for quickly noting current context', {
     id: z.string().describe('Project ID'),
@@ -179,8 +188,8 @@ server.tool('update_left_off', 'Update the "where I left off" field for a projec
         .select('id, name, left_off')
         .single();
     if (error)
-        return { content: [{ type: 'text', text: `Error: ${error.message}` }] };
-    return { content: [{ type: 'text', text: `Updated: ${JSON.stringify(data, null, 2)}` }] };
+        return err(error.message);
+    return ok(data);
 });
 const transport = new StdioServerTransport();
 await server.connect(transport);
