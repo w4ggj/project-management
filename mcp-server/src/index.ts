@@ -140,5 +140,70 @@ server.tool('update_left_off', 'Update the "where I left off" field for a projec
   return ok(data)
 })
 
+server.tool('delete_todo', 'Delete a todo by ID', {
+  id: z.string().describe('Todo ID'),
+}, async ({ id }) => {
+  const data = await api('DELETE', `/api/todos/${id}`)
+  if (data?.error) return err(data.error)
+  return ok(data)
+})
+
+server.tool('weekly_summary', 'Get a summary of overdue todos, todos due within 7 days, and projects with deadlines within 14 days', {}, async () => {
+  const [projects, todos] = await Promise.all([
+    api('GET', '/api/projects'),
+    api('GET', '/api/todos'),
+  ])
+  if (projects?.error) return err(projects.error)
+  if (todos?.error) return err(todos.error)
+
+  const today = new Date().toISOString().slice(0, 10)
+  const in7 = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const in14 = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+
+  const todoList: any[] = Array.isArray(todos) ? todos : (todos?.todos ?? [])
+  const projectList: any[] = Array.isArray(projects) ? projects : (projects?.projects ?? [])
+
+  const overdue = todoList.filter(t => !t.done && t.due_date && t.due_date < today)
+  const dueSoon = todoList.filter(t => !t.done && t.due_date && t.due_date >= today && t.due_date <= in7)
+  const projectsDueSoon = projectList.filter(p => p.deadline && p.deadline >= today && p.deadline <= in14)
+
+  const lines: string[] = []
+
+  lines.push('=== WEEKLY SUMMARY ===')
+  lines.push(`(as of ${today})`)
+  lines.push('')
+
+  lines.push(`OVERDUE TODOS (${overdue.length})`)
+  if (overdue.length === 0) {
+    lines.push('  None')
+  } else {
+    for (const t of overdue) {
+      lines.push(`  - [${t.due_date}] ${t.text} (id: ${t.id})`)
+    }
+  }
+  lines.push('')
+
+  lines.push(`TODOS DUE WITHIN 7 DAYS (${dueSoon.length})`)
+  if (dueSoon.length === 0) {
+    lines.push('  None')
+  } else {
+    for (const t of dueSoon) {
+      lines.push(`  - [${t.due_date}] ${t.text} (id: ${t.id})`)
+    }
+  }
+  lines.push('')
+
+  lines.push(`PROJECTS WITH DEADLINES WITHIN 14 DAYS (${projectsDueSoon.length})`)
+  if (projectsDueSoon.length === 0) {
+    lines.push('  None')
+  } else {
+    for (const p of projectsDueSoon) {
+      lines.push(`  - [${p.deadline}] ${p.name} — ${p.status} (id: ${p.id})`)
+    }
+  }
+
+  return { content: [{ type: 'text' as const, text: sanitize(lines.join('\n')) }] }
+})
+
 const transport = new StdioServerTransport()
 await server.connect(transport)
