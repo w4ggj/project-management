@@ -48,12 +48,18 @@ function RichNoteEditor({ onSave }: { onSave: (html: string) => Promise<void> })
   })
 
   async function handleSave() {
-    if (!editor || editor.isEmpty) return
+    if (saving) return
+    const html = editor?.getHTML() ?? ''
+    const text = editor?.getText().trim() ?? ''
+    if (!text) {
+      setError('Please write something before saving')
+      return
+    }
     setSaving(true)
     setError(null)
     try {
-      await onSave(editor.getHTML())
-      editor.commands.clearContent()
+      await onSave(html)
+      editor?.commands.clearContent()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save note')
     } finally {
@@ -76,7 +82,7 @@ function RichNoteEditor({ onSave }: { onSave: (html: string) => Promise<void> })
       <div className="flex items-center gap-3 mt-2">
         <button
           onClick={handleSave}
-          disabled={saving || !editor || editor.isEmpty}
+          disabled={saving}
           className="px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 disabled:opacity-40 transition-colors"
         >
           {saving ? 'Saving...' : 'Add Note'}
