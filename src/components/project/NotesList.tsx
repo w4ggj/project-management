@@ -33,6 +33,7 @@ function ToolbarBtn({ onClick, active, title, children }: {
 
 function RichNoteEditor({ onSave }: { onSave: (html: string) => Promise<void> }) {
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const editor = useEditor({
     extensions: [
@@ -49,9 +50,15 @@ function RichNoteEditor({ onSave }: { onSave: (html: string) => Promise<void> })
   async function handleSave() {
     if (!editor || editor.isEmpty) return
     setSaving(true)
-    await onSave(editor.getHTML())
-    editor.commands.clearContent()
-    setSaving(false)
+    setError(null)
+    try {
+      await onSave(editor.getHTML())
+      editor.commands.clearContent()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save note')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -66,13 +73,16 @@ function RichNoteEditor({ onSave }: { onSave: (html: string) => Promise<void> })
         </div>
         <EditorContent editor={editor} />
       </div>
-      <button
-        onClick={handleSave}
-        disabled={saving || !editor || editor.isEmpty}
-        className="mt-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 disabled:opacity-40 transition-colors"
-      >
-        {saving ? 'Saving...' : 'Add Note'}
-      </button>
+      <div className="flex items-center gap-3 mt-2">
+        <button
+          onClick={handleSave}
+          disabled={saving || !editor || editor.isEmpty}
+          className="px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 disabled:opacity-40 transition-colors"
+        >
+          {saving ? 'Saving...' : 'Add Note'}
+        </button>
+        {error && <span className="text-red-500 text-xs">{error}</span>}
+      </div>
     </div>
   )
 }
@@ -87,8 +97,9 @@ export default function NotesList({ projectId, initial }: { projectId: string; i
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ project_id: projectId, body: html }),
     })
-    const note = await res.json()
-    setNotes(prev => [note, ...prev])
+    const data = await res.json()
+    if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`)
+    setNotes(prev => [data, ...prev])
   }
 
   async function deleteNote(id: string) {
