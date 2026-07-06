@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ProjectSummary } from '@/types'
+import { Project, ProjectSummary } from '@/types'
 import ProjectCard from './ProjectCard'
 
 type SortKey = 'status' | 'name' | 'deadline'
