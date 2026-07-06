@@ -1,7 +1,13 @@
 import { supabase } from '@/lib/supabase'
 import DeadlineStrip from '@/components/dashboard/DeadlineStrip'
 import ProjectGrid from '@/components/dashboard/ProjectGrid'
-import { Project } from '@/types'
+import DailyTodos from '@/components/dashboard/DailyTodos'
+import { Project, Todo } from '@/types'
+
+interface TodoWithProject extends Todo {
+  project_name: string
+  project_id: string
+}
 
 async function getProjects(): Promise<(Project & { todos?: { done: boolean }[] })[]> {
   const { data } = await supabase
@@ -19,10 +25,22 @@ async function getAllProjects(): Promise<Project[]> {
   return (data ?? []) as Project[]
 }
 
+async function getAllTodos(): Promise<TodoWithProject[]> {
+  const { data } = await supabase
+    .from('todos')
+    .select('*, projects(name)')
+    .order('position')
+  return (data ?? []).map((t: any) => ({
+    ...t,
+    project_name: t.projects?.name ?? 'Unknown',
+  })) as TodoWithProject[]
+}
+
 export default async function Dashboard() {
-  const [projects, allProjects] = await Promise.all([
+  const [projects, allProjects, allTodos] = await Promise.all([
     getProjects(),
     getAllProjects(),
+    getAllTodos(),
   ])
 
   return (
@@ -50,7 +68,12 @@ export default async function Dashboard() {
           <a href="/projects/new" className="text-sm text-gray-900 underline">Create your first project</a>
         </div>
       ) : (
-        <ProjectGrid projects={projects} />
+        <div className="flex gap-6 items-start">
+          <DailyTodos initial={allTodos} />
+          <div className="flex-1 min-w-0">
+            <ProjectGrid projects={projects} />
+          </div>
+        </div>
       )}
     </div>
   )
