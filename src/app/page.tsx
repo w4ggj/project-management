@@ -26,13 +26,14 @@ async function getAllProjects(): Promise<Project[]> {
 }
 
 async function getAllTodos(): Promise<TodoWithProject[]> {
-  const { data } = await supabase
-    .from('todos')
-    .select('*, projects(name)')
-    .order('position')
-  return (data ?? []).map((t: any) => ({
+  const [{ data: todos }, { data: projects }] = await Promise.all([
+    supabase.from('todos').select('*').order('position'),
+    supabase.from('projects').select('id, name'),
+  ])
+  const nameMap = Object.fromEntries((projects ?? []).map(p => [p.id, p.name]))
+  return (todos ?? []).map(t => ({
     ...t,
-    project_name: t.projects?.name ?? 'Unknown',
+    project_name: nameMap[t.project_id] ?? 'Unknown',
   })) as TodoWithProject[]
 }
 
