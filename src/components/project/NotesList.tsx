@@ -1,42 +1,98 @@
 'use client'
 
 import { useState } from 'react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import Placeholder from '@tiptap/extension-placeholder'
 import { Note } from '@/types'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 function formatDateTime(dateStr: string) {
   return new Date(dateStr).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: 'numeric', minute: '2-digit', hour12: true,
   })
+}
+
+function ToolbarBtn({ onClick, active, title, children }: {
+  onClick: () => void
+  active?: boolean
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      className={`px-2 py-0.5 text-xs rounded transition-colors ${active ? 'bg-gray-200 text-gray-900' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function RichNoteEditor({ onSave }: { onSave: (html: string) => Promise<void> }) {
+  const [saving, setSaving] = useState(false)
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Placeholder.configure({ placeholder: 'Add a note...' }),
+    ],
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm max-w-none focus:outline-none min-h-[80px] px-3 py-2 text-sm text-gray-800',
+      },
+    },
+  })
+
+  async function handleSave() {
+    if (!editor || editor.isEmpty) return
+    setSaving(true)
+    await onSave(editor.getHTML())
+    editor.commands.clearContent()
+    setSaving(false)
+  }
+
+  return (
+    <div className="mb-4">
+      <div className="border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-gray-300">
+        <div className="flex gap-1 px-2 pt-2 border-b border-gray-100 bg-gray-50">
+          <ToolbarBtn onClick={() => editor?.chain().focus().toggleBold().run()} active={editor?.isActive('bold')} title="Bold"><strong>B</strong></ToolbarBtn>
+          <ToolbarBtn onClick={() => editor?.chain().focus().toggleItalic().run()} active={editor?.isActive('italic')} title="Italic"><em>I</em></ToolbarBtn>
+          <ToolbarBtn onClick={() => editor?.chain().focus().toggleBulletList().run()} active={editor?.isActive('bulletList')} title="Bullet list">• list</ToolbarBtn>
+          <ToolbarBtn onClick={() => editor?.chain().focus().toggleOrderedList().run()} active={editor?.isActive('orderedList')} title="Numbered list">1. list</ToolbarBtn>
+          <ToolbarBtn onClick={() => editor?.chain().focus().toggleCodeBlock().run()} active={editor?.isActive('codeBlock')} title="Code block">code</ToolbarBtn>
+        </div>
+        <EditorContent editor={editor} />
+      </div>
+      <button
+        onClick={handleSave}
+        disabled={saving || !editor || editor.isEmpty}
+        className="mt-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 disabled:opacity-40 transition-colors"
+      >
+        {saving ? 'Saving...' : 'Add Note'}
+      </button>
+    </div>
+  )
 }
 
 export default function NotesList({ projectId, initial }: { projectId: string; initial: Note[] }) {
   const [notes, setNotes] = useState<Note[]>(initial)
-  const [text, setText] = useState('')
-  const [saving, setSaving] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  async function addNote() {
-    if (!text.trim()) return
-    setSaving(true)
+  async function addNote(html: string) {
     const res = await fetch('/api/notes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ project_id: projectId, body: text.trim() }),
+      body: JSON.stringify({ project_id: projectId, body: html }),
     })
     const note = await res.json()
     setNotes(prev => [note, ...prev])
-    setText('')
-    setSaving(false)
   }
 
   async function deleteNote(id: string) {
-    await fetch(`/api/notes/${id}`, { method: 'DELETE' })
+    await fetch('/api/notes/' + id, { method: 'DELETE' })
     setNotes(prev => prev.filter(n => n.id !== id))
     setDeleteId(null)
   }
@@ -45,22 +101,7 @@ export default function NotesList({ projectId, initial }: { projectId: string; i
     <div>
       <h3 className="font-semibold text-gray-700 mb-3">Notes</h3>
 
-      <div className="mb-4">
-        <textarea
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="Add a note..."
-          rows={3}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none"
-        />
-        <button
-          onClick={addNote}
-          disabled={saving || !text.trim()}
-          className="mt-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 disabled:opacity-40 transition-colors"
-        >
-          {saving ? 'Saving...' : 'Add Note'}
-        </button>
-      </div>
+      <RichNoteEditor onSave={addNote} />
 
       {notes.length === 0 && (
         <p className="text-gray-400 text-sm text-center py-4">No notes yet</p>
@@ -70,7 +111,10 @@ export default function NotesList({ projectId, initial }: { projectId: string; i
         {notes.map(note => (
           <div key={note.id} className="bg-gray-50 rounded-lg p-3 group">
             <div className="flex items-start justify-between gap-2">
-              <p className="text-sm text-gray-800 whitespace-pre-wrap flex-1">{note.body}</p>
+              <div
+                className="prose prose-sm max-w-none flex-1 text-gray-800"
+                dangerouslySetInnerHTML={{ __html: note.body }}
+              />
               <button
                 onClick={() => setDeleteId(note.id)}
                 className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-xs transition-opacity shrink-0"
