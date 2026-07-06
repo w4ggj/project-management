@@ -46,9 +46,18 @@ export default async function Dashboard({
       <DeadlineStrip projects={allProjects} />
 
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {projects.length} Project{projects.length !== 1 ? 's' : ''}
-        </h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {projects.length} Project{projects.length !== 1 ? 's' : ''}
+          </h1>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {projects.filter(p => p.status === 'active').length} active
+            {' · '}
+            {projects.filter(p => p.status === 'paused').length} paused
+            {' · '}
+            {projects.filter(p => p.status === 'done').length} done
+          </p>
+        </div>
         <Suspense>
           <StatusFilter />
         </Suspense>
