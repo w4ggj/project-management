@@ -51,11 +51,11 @@ export default async function Dashboard({
             {projects.length} Project{projects.length !== 1 ? 's' : ''}
           </h1>
           <p className="text-xs text-gray-400 mt-0.5">
-            {projects.filter(p => p.status === 'active').length} active
+            {allProjects.filter(p => p.status === 'active').length} active
             {' · '}
-            {projects.filter(p => p.status === 'paused').length} paused
+            {allProjects.filter(p => p.status === 'paused').length} paused
             {' · '}
-            {projects.filter(p => p.status === 'done').length} done
+            {allProjects.filter(p => p.status === 'done').length} done
           </p>
         </div>
         <Suspense>
