@@ -10,9 +10,7 @@ interface TodoWithProject extends Todo {
   project_id: string
 }
 
-interface ShellProject extends Project {
-  todos?: { done: boolean }[]
-}
+type ShellProject = Omit<Project, 'todos'> & { todos?: { done: boolean }[] }
 
 export default function DashboardShell({
   projects,
