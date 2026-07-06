@@ -55,8 +55,16 @@ create trigger projects_updated_at
   before update on projects
   for each row execute function update_updated_at();
 
+create table notes (
+  id          uuid primary key default gen_random_uuid(),
+  project_id  uuid not null references projects(id) on delete cascade,
+  body        text not null,
+  created_at  timestamptz not null default now()
+);
+
 create index todos_project_id    on todos(project_id);
 create index services_project_id on services(project_id);
 create index paths_project_id    on paths(project_id);
+create index notes_project_id    on notes(project_id);
 create index projects_status     on projects(status);
 create index projects_deadline   on projects(deadline);

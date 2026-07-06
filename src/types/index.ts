@@ -15,6 +15,7 @@ export interface Project {
   todos?: Todo[]
   services?: Service[]
   paths?: Path[]
+  notes?: Note[]
 }
 
 export interface Todo {
@@ -23,6 +24,14 @@ export interface Todo {
   text: string
   done: boolean
   position: number
+  due_date: string | null
+  created_at: string
+}
+
+export interface Note {
+  id: string
+  project_id: string
+  body: string
   created_at: string
 }
 

@@ -6,15 +6,17 @@ import StatusBadge from '@/components/ui/StatusBadge'
 import TodoList from '@/components/project/TodoList'
 import ServicesList from '@/components/project/ServicesList'
 import PathsList from '@/components/project/PathsList'
+import NotesList from '@/components/project/NotesList'
 import DeleteProjectButton from '@/components/project/DeleteProjectButton'
 import { formatDate, deadlineLabel, isOverdue } from '@/lib/utils'
 
 async function getProject(id: string): Promise<Project | null> {
-  const [projectRes, todosRes, servicesRes, pathsRes] = await Promise.all([
+  const [projectRes, todosRes, servicesRes, pathsRes, notesRes] = await Promise.all([
     supabase.from('projects').select('*').eq('id', id).single(),
     supabase.from('todos').select('*').eq('project_id', id).order('position'),
     supabase.from('services').select('*').eq('project_id', id).order('position'),
     supabase.from('paths').select('*').eq('project_id', id).order('position'),
+    supabase.from('notes').select('*').eq('project_id', id).order('created_at', { ascending: false }),
   ])
 
   if (projectRes.error) return null
@@ -24,6 +26,7 @@ async function getProject(id: string): Promise<Project | null> {
     todos: todosRes.data ?? [],
     services: servicesRes.data ?? [],
     paths: pathsRes.data ?? [],
+    notes: notesRes.data ?? [],
   } as Project
 }
 
@@ -97,8 +100,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
       {/* Main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
-          <TodoList projectId={project.id} initial={project.todos ?? []} />
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <TodoList projectId={project.id} initial={project.todos ?? []} />
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <NotesList projectId={project.id} initial={project.notes ?? []} />
+          </div>
         </div>
 
         <div className="space-y-6">
