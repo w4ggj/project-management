@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { checkApiKey } from '@/lib/apiAuth'
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authError = checkApiKey(req)
+  if (authError) return authError
   const { id } = await params
   const { error } = await supabase.from('notes').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

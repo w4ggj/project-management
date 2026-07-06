@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { checkApiKey } from '@/lib/apiAuth'
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authError = checkApiKey(req)
+  if (authError) return authError
   const { id } = await params
 
   const [projectRes, todosRes, servicesRes, pathsRes] = await Promise.all([
@@ -22,6 +25,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authError = checkApiKey(req)
+  if (authError) return authError
   const { id } = await params
   const body = await req.json()
 
@@ -36,7 +41,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   return NextResponse.json(data)
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authError = checkApiKey(req)
+  if (authError) return authError
   const { id } = await params
   const { error } = await supabase.from('projects').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

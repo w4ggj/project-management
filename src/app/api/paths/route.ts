@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { checkApiKey } from '@/lib/apiAuth'
 
 export async function POST(req: NextRequest) {
+  const authError = checkApiKey(req)
+  if (authError) return authError
   const body = await req.json()
 
   const { data: existing } = await supabase

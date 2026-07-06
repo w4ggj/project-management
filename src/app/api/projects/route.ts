@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { checkApiKey } from '@/lib/apiAuth'
 
 export async function GET(req: NextRequest) {
+  const authError = checkApiKey(req)
+  if (authError) return authError
   const status = req.nextUrl.searchParams.get('status')
 
   let query = supabase
@@ -19,6 +22,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = checkApiKey(req)
+  if (authError) return authError
   const body = await req.json()
   const { data, error } = await supabase
     .from('projects')
