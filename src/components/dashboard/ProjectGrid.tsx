@@ -6,7 +6,7 @@ import ProjectCard from './ProjectCard'
 
 type SortKey = 'status' | 'name' | 'deadline'
 
-function sortProjects(projects: Project[], key: SortKey): Project[] {
+function sortProjects(projects: ProjectSummary[], key: SortKey): ProjectSummary[] {
   const STATUS_ORDER: Record<string, number> = { active: 0, paused: 1, done: 2 }
   return [...projects].sort((a, b) => {
     if (key === 'status') return STATUS_ORDER[a.status] - STATUS_ORDER[b.status]
@@ -53,7 +53,7 @@ export default function ProjectGrid({ projects }: { projects: ProjectSummary[] }
             <p className="text-gray-400 text-sm text-center py-12">No active or paused projects</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {active.map(p => <ProjectCard key={p.id} project={p} />)}
+              {active.map(p => <ProjectCard key={p.id} project={p as unknown as Project} />)}
             </div>
           )}
         </div>
@@ -70,7 +70,7 @@ export default function ProjectGrid({ projects }: { projects: ProjectSummary[] }
             </button>
             {doneOpen && (
               <div className="mt-2 space-y-3">
-                {done.map(p => <ProjectCard key={p.id} project={p} />)}
+                {done.map(p => <ProjectCard key={p.id} project={p as unknown as Project} />)}
               </div>
             )}
           </div>
