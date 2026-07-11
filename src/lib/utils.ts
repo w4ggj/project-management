@@ -21,6 +21,16 @@ export const STATUS_COLORS: Record<Status, { border: string; bg: string; text: s
   },
 }
 
+// Returns today's date as YYYY-MM-DD in Eastern Time
+export function todayET(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+}
+
+// Returns a date N days from now as YYYY-MM-DD in Eastern Time
+export function daysFromNowET(days: number): string {
+  return new Date(Date.now() + days * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+}
+
 export function formatDate(dateStr: string | null): string {
   if (!dateStr) return ''
   const d = new Date(dateStr + 'T00:00:00')
@@ -29,10 +39,10 @@ export function formatDate(dateStr: string | null): string {
 
 export function daysUntil(dateStr: string | null): number | null {
   if (!dateStr) return null
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
-  const d = new Date(dateStr + 'T00:00:00')
-  return Math.round((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  const today = todayET()
+  const todayMs = new Date(today + 'T00:00:00').getTime()
+  const targetMs = new Date(dateStr + 'T00:00:00').getTime()
+  return Math.round((targetMs - todayMs) / (1000 * 60 * 60 * 24))
 }
 
 export function deadlineLabel(dateStr: string | null): string | null {

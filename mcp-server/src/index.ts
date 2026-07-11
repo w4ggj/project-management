@@ -177,9 +177,9 @@ server.tool('weekly_summary', 'Get a summary of overdue todos, todos due within 
   if (projects?.error) return err(projects.error)
   if (todos?.error) return err(todos.error)
 
-  const today = new Date().toISOString().slice(0, 10)
-  const in7 = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  const in14 = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+  const in7 = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+  const in14 = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
 
   const todoList: any[] = Array.isArray(todos) ? todos : (todos?.todos ?? [])
   const projectList: any[] = Array.isArray(projects) ? projects : (projects?.projects ?? [])

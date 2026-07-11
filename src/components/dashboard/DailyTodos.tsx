@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Todo, Project } from '@/types'
+import { todayET, daysFromNowET } from '@/lib/utils'
 
 interface TodoWithProject extends Todo {
   project_name: string
@@ -14,16 +15,8 @@ interface Group {
   todos: TodoWithProject[]
 }
 
-function today() {
-  return new Date().toISOString().slice(0, 10)
-}
-
-function weekEnd() {
-  return new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
-}
-
 function isOverdue(due: string | null) {
-  return !!due && due < today()
+  return !!due && due < todayET()
 }
 
 function toGroups(list: TodoWithProject[]): Group[] {
@@ -148,9 +141,8 @@ export default function DailyTodos({
     setAdding(false)
   }
 
-  const w = weekEnd()
   const visible = filter === 'due'
-    ? todos.filter(todo => todo.due_date && todo.due_date <= w)
+    ? todos.filter(todo => todo.due_date && todo.due_date <= daysFromNowET(7))
     : todos
 
   const incomplete = toGroups(visible.filter(t => !t.done))

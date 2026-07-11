@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { Todo } from '@/types'
+import { todayET } from '@/lib/utils'
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return null
   const d = new Date(dateStr + 'T00:00:00')
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
-  const diff = Math.round((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  const todayMs = new Date(todayET() + 'T00:00:00').getTime()
+  const diff = Math.round((d.getTime() - todayMs) / (1000 * 60 * 60 * 24))
   if (diff < 0) return { label: `${Math.abs(diff)}d overdue`, overdue: true }
   if (diff === 0) return { label: 'Due today', overdue: true }
   if (diff === 1) return { label: 'Due tomorrow', overdue: false }
