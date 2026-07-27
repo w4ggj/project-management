@@ -53,6 +53,13 @@ export default function TimeTracker({
     setSaving(false)
   }
 
+  async function deleteEntry(id: string) {
+    const prev = entries
+    setEntries(cur => cur.filter(e => e.id !== id))
+    const res = await fetch(`/api/time?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+    if (!res.ok) setEntries(prev) // restore on failure
+  }
+
   const visible = showAll ? entries : entries.slice(0, 5)
 
   return (
@@ -111,14 +118,24 @@ export default function TimeTracker({
       ) : (
         <div className="space-y-1.5">
           {visible.map(entry => (
-            <div key={entry.id} className="flex items-center justify-between text-sm">
+            <div key={entry.id} className="group flex items-center justify-between text-sm">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="font-medium text-gray-900 shrink-0">{formatMinutes(entry.minutes)}</span>
                 {entry.description && (
                   <span className="text-gray-500 truncate">{entry.description}</span>
                 )}
               </div>
-              <span className="text-xs text-gray-400 shrink-0 ml-2">{formatDate(entry.created_at)}</span>
+              <div className="flex items-center gap-2 shrink-0 ml-2">
+                <span className="text-xs text-gray-400">{formatDate(entry.created_at)}</span>
+                <button
+                  onClick={() => deleteEntry(entry.id)}
+                  aria-label="Delete time entry"
+                  title="Delete"
+                  className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity leading-none"
+                >
+                  &times;
+                </button>
+              </div>
             </div>
           ))}
           {entries.length > 5 && (
