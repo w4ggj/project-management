@@ -6,6 +6,11 @@ import { Project } from '@/types'
 
 export default function NotificationInit() {
   useEffect(() => {
+    // Register the PWA service worker so the app is installable on mobile.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {})
+    }
+
     const init = async () => {
       await requestNotificationPermission()
       const res = await fetch('/api/projects')
